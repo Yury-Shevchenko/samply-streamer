@@ -1,0 +1,26 @@
+{
+  "name": "telegram-streamer",
+  "version": "1.0.0",
+  "description": "Stream messages from Telegram to Samply API",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon ./index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Yury-Shevchenko/telegram-streamer.git"
+  },
+  "author": "Yury Shevchenko",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Yury-Shevchenko/telegram-streamer/issues"
+  },
+  "homepage": "https://github.com/Yury-Shevchenko/telegram-streamer#readme",
+  "dependencies": {
+    "node-fetch": "^3.3.2",
+    "node-telegram-bot-api": "^0.64.0",
+    "nodemon": "^3.0.3",
+    "text-cleaner": "^1.2.1"
+  }
+}
