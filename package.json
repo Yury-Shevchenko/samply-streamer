@@ -18,9 +18,14 @@
   },
   "homepage": "https://github.com/Yury-Shevchenko/telegram-streamer#readme",
   "dependencies": {
-    "node-fetch": "^3.3.2",
+    "dotenv": "^16.4.1",
+    "express": "^4.18.2",
+    "moment": "^2.30.1",
+    "mongoose": "^8.1.1",
+    "nanoid": "^3.1.23",
     "node-telegram-bot-api": "^0.64.0",
     "nodemon": "^3.0.3",
+    "openai": "^4.27.0",
     "text-cleaner": "^1.2.1"
   }
 }
