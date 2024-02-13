@@ -117,12 +117,7 @@ async function processMessage({ msg }) {
       const messageId = nanoid(7);
 
       // prompt for ChatGPT
-      const prompt = `
-        We are conducting a study on the perception of fake news. For this particular situation, you need to come up with two short (maximum 3 sentences) modified messages based on the original message, which will be provided. 
-        The first modified message should be as close as possible to original news, so it should not contain misinformation.
-        The second modified message should be fake news, so it should contain misinformation.
-        You must respond with only the text for these two messages. The original message is: 
-      `;
+      const prompt = process.env.OPENAI_PROMPT;
       let chatCompletion, textModifiedTrue, textModifiedFake;
       try {
         chatCompletion = await openai.chat.completions.create({
