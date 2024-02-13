@@ -50,7 +50,7 @@ async function postData(url, data) {
 
 async function processMessage({ msg }) {
   const bots = await Bot.find(
-    { title: "Pilot test 01" },
+    { title: process.env.BOT_TITLE },
     { _id: 1, rules: 1, sent: 1 }
   ).limit(1);
 
