@@ -77,6 +77,10 @@ async function processMessage({ msg }) {
 
   // const chatId = msg.chat.id;
   const rawText = msg?.text || msg?.caption;
+  if (!rawText) {
+    return;
+  }
+
   const textOriginal = TextCleaner(rawText).stripHtml().condense().valueOf();
 
   const messages = await Message.find(
