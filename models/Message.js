@@ -15,9 +15,9 @@ const messageSchema = new mongoose.Schema({
   textOriginal: String,
   textModifiedTrue: String,
   textModifiedFake: String,
-  conditions: JSON,
   openAIPostResult: JSON,
   samplyPostResult: JSON,
+  group: String,
 });
 
 module.exports = mongoose.model("Message", messageSchema);

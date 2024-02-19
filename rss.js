@@ -1,25 +1,20 @@
 const mongoose = require("mongoose");
 const moment = require("moment");
-
+const Bot = mongoose.model("Bot");
+const Message = mongoose.model("Message");
+const TextCleaner = require("text-cleaner");
 const { customAlphabet } = require("nanoid");
 const nanoid = customAlphabet(
   "346789ABCDEFGHJKLMNPQRTUVWXYabcdefghijkmnpqrtwxyz",
   10
 );
 
-const Bot = mongoose.model("Bot");
-const Message = mongoose.model("Message");
+const RssFeedEmitter = require("rss-feed-emitter");
+const feeder = new RssFeedEmitter({ skipFirstLoad: true });
 
-const TelegramBot = require("node-telegram-bot-api");
-const TextCleaner = require("text-cleaner");
 const { OpenAI } = require("openai");
-
-// the Telegram token from @BotFather
-const token = process.env.TELEGRAM_TOKEN;
 const openaiKey = process.env.OPENAI_TOKEN;
 
-// Create a bot that uses 'polling' to fetch new updates
-const telegramBot = new TelegramBot(token, { polling: true });
 // Initialize the chatGPT
 const openai = new OpenAI({
   apiKey: openaiKey,
@@ -27,17 +22,21 @@ const openai = new OpenAI({
 
 // Samply notification
 const url = "https://samply.uni-konstanz.de/api/notify";
-const samplySpec = {
-  projectID: process.env.SAMPLY_PROJECT_ID,
-  groupID: process.env.SAMPLY_GROUP_ID,
-  participantID: "",
-  token: process.env.SAMPLY_TOKEN,
-  title: process.env.SAMPLY_TITLE,
-  message: process.env.SAMPLY_MESSAGE,
-};
 
 // Samply function to send the POST request to activate the notification
-async function postData(url, data) {
+async function postData({ url, group, messageId }) {
+  const samplySpec = {
+    projectID: process.env[`SAMPLY_PROJECT_ID_${group}`],
+    groupID: process.env[`SAMPLY_GROUP_ID_${group}`],
+    token: process.env[`SAMPLY_TOKEN_${group}`],
+    title: process.env[`SAMPLY_TITLE_${group}`],
+    message: process.env[`SAMPLY_MESSAGE_${group}`],
+    participantID: "",
+  };
+  const data = {
+    ...samplySpec,
+    url: process.env.SAMPLY_SURVEY_URL + messageId,
+  };
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -48,16 +47,16 @@ async function postData(url, data) {
   return response;
 }
 
-async function processMessage({ msg }) {
+async function processMessage({ msg, group }) {
   const bots = await Bot.find(
-    { title: process.env.BOT_TITLE },
+    { title: process.env[`BOT_TITLE_${group}`] },
     { _id: 1, rules: 1, sent: 1 }
   ).limit(1);
 
   let bot;
   if (bots.length === 0) {
     bot = new Bot({
-      title: process.env.BOT_TITLE,
+      title: process.env[`BOT_TITLE_${group}`],
       rules: {
         maxPerSlot: process.env.BOT_MAX_PER_SLOT,
         slots: [
@@ -66,7 +65,7 @@ async function processMessage({ msg }) {
           { id: "17002100", start: 1700, end: 2100 },
         ],
         date_start: moment("2024-02-12"),
-        date_end: moment("2024-03-12"),
+        date_end: moment("2024-05-12"),
       },
       sent: {},
     });
@@ -75,8 +74,7 @@ async function processMessage({ msg }) {
     bot = bots[0];
   }
 
-  // const chatId = msg.chat.id;
-  const rawText = msg?.text || msg?.caption;
+  const rawText = msg?.summary || msg?.description;
   if (!rawText) {
     return;
   }
@@ -137,9 +135,10 @@ async function processMessage({ msg }) {
       }
 
       // send Samply notification
-      const samplyResult = await postData(url, {
-        ...samplySpec,
-        url: process.env.SAMPLY_SURVEY_URL + messageId,
+      const samplyResult = await postData({
+        url,
+        group,
+        messageId,
       });
 
       // save the message
@@ -150,12 +149,12 @@ async function processMessage({ msg }) {
         textOriginal: textOriginal,
         textModifiedTrue: textModifiedTrue,
         textModifiedFake: textModifiedFake,
-        conditions: {},
         openAIPostResult: chatCompletion,
         samplyPostResult: {
           status: samplyResult?.status,
           statusText: samplyResult?.statusText,
         },
+        group: group,
       }).save();
 
       // update session
@@ -171,9 +170,18 @@ async function processMessage({ msg }) {
   }
 }
 
-// react to the message
-telegramBot.on("message", async (msg) => {
-  processMessage({ msg });
+feeder.add({
+  url: [process.env.RSS_URL_ENGLISH, process.env.RSS_URL_GERMAN],
+  refresh: 2000,
 });
 
-module.exports = telegramBot;
+feeder.on("new-item", function (item) {
+  if (item?.meta?.link === process.env.RSS_URL_ENGLISH) {
+    processMessage({ msg: item, group: "ENGLISH" });
+  }
+  if (item?.meta?.link === process.env.RSS_URL_GERMAN) {
+    processMessage({ msg: item, group: "GERMAN" });
+  }
+});
+
+module.exports = feeder;

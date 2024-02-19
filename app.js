@@ -18,7 +18,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// telegram bot
-const bot = require("./bot");
+// rss
+const rss = require("./rss");
 
 module.exports = app;
