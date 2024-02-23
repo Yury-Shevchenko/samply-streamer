@@ -50,7 +50,6 @@ async function postData({ url, group, messageId }) {
 }
 
 async function processMessage({ msg, group }) {
-  console.log({ msg });
   const bots = await Bot.find(
     { title: process.env[`BOT_TITLE_${group}`] },
     { _id: 1, rules: 1, sent: 1 }
@@ -176,6 +175,11 @@ async function processMessage({ msg, group }) {
     }
   }
 }
+
+feeder.add({
+  url: [process.env.RSS_URL_ENGLISH, process.env.RSS_URL_GERMAN],
+  refresh: 60000,
+});
 
 feeder.on("new-item", function (item) {
   if (item?.meta?.link === process.env.RSS_URL_ENGLISH) {
