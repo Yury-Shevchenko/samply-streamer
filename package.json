@@ -1,7 +1,7 @@
 {
-  "name": "telegram-streamer",
+  "name": "streamer",
   "version": "1.0.0",
-  "description": "Stream messages from Telegram to Samply API",
+  "description": "Stream messages from RSS to Samply API",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

@@ -34,9 +34,10 @@ async function postData({ url, group, messageId }) {
     participantID: "",
     expireIn: process.env.SAMPLY_EXPIRE_IN,
   };
+  const timestamp = Date.now();
   const data = {
     ...samplySpec,
-    url: process.env.SAMPLY_SURVEY_URL + messageId,
+    url: `${process.env.SAMPLY_SURVEY_URL}${messageId}&t=${timestamp}`,
   };
   const response = await fetch(url, {
     method: "POST",
@@ -175,11 +176,6 @@ async function processMessage({ msg, group }) {
     }
   }
 }
-
-feeder.add({
-  url: [process.env.RSS_URL_ENGLISH, process.env.RSS_URL_GERMAN],
-  refresh: 2000,
-});
 
 feeder.on("new-item", function (item) {
   if (item?.meta?.link === process.env.RSS_URL_ENGLISH) {
