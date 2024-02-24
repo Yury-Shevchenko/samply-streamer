@@ -23,6 +23,10 @@ const openai = new OpenAI({
 // Samply notification
 const url = "https://samply.uni-konstanz.de/api/notify";
 
+// Control false alarms (several notifications coming one after the other)
+let englishStreamerIsFree = true;
+let germanStreamerIsFree = true;
+
 // Samply function to send the POST request to activate the notification
 async function postData({ url, group, messageId }) {
   const samplySpec = {
@@ -50,6 +54,13 @@ async function postData({ url, group, messageId }) {
 }
 
 async function processMessage({ msg, group }) {
+  if (group === "ENGLISH") {
+    englishStreamerIsFree = false;
+  }
+  if (group === "GERMAN") {
+    germanStreamerIsFree = false;
+  }
+
   const bots = await Bot.find(
     { title: process.env[`BOT_TITLE_${group}`] },
     { _id: 1, rules: 1, sent: 1 }
@@ -181,12 +192,17 @@ feeder.add({
   refresh: 60000,
 });
 
-feeder.on("new-item", function (item) {
-  if (item?.meta?.link === process.env.RSS_URL_ENGLISH) {
-    processMessage({ msg: item, group: "ENGLISH" });
+feeder.on("new-item", async function (item) {
+  if (
+    item?.meta?.link === process.env.RSS_URL_ENGLISH &&
+    englishStreamerIsFree
+  ) {
+    await processMessage({ msg: item, group: "ENGLISH" });
+    englishStreamerIsFree = true;
   }
-  if (item?.meta?.link === process.env.RSS_URL_GERMAN) {
-    processMessage({ msg: item, group: "GERMAN" });
+  if (item?.meta?.link === process.env.RSS_URL_GERMAN && germanStreamerIsFree) {
+    await processMessage({ msg: item, group: "GERMAN" });
+    germanStreamerIsFree = true;
   }
 });
 
