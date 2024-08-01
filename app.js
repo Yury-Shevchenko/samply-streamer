@@ -8,6 +8,9 @@ app.use(cors());
 app.options("*", cors());
 app.use("/", routes);
 
+// serve static files from the uploads directory
+app.use("/images", express.static("images"));
+
 app.use((req, res, next) => {
   // had to enable for API to work
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -18,7 +21,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// rss
+// activate rss
 const rss = require("./rss");
 
 module.exports = app;

@@ -1,5 +1,5 @@
 {
-  "name": "streamer",
+  "name": "Samply Streamer",
   "version": "1.0.0",
   "description": "Stream messages from RSS to Samply API",
   "main": "index.js",
@@ -10,14 +10,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Yury-Shevchenko/telegram-streamer.git"
+    "url": "git+https://github.com/Yury-Shevchenko/samply-streamer.git"
   },
   "author": "Yury Shevchenko",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Yury-Shevchenko/telegram-streamer/issues"
+    "url": "https://github.com/Yury-Shevchenko/samply-streamer/issues"
   },
-  "homepage": "https://github.com/Yury-Shevchenko/telegram-streamer#readme",
+  "homepage": "https://github.com/Yury-Shevchenko/samply-streamer#readme",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.1",
