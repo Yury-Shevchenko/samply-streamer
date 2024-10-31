@@ -22,6 +22,6 @@ app.use((req, res, next) => {
 });
 
 // activate rss
-const rss = require("./rss");
+const rss = require("./rss_image");
 
 module.exports = app;
