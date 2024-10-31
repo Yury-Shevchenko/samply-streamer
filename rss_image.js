@@ -13,9 +13,7 @@ const nanoid = customAlphabet(
 );
 
 const RssFeedEmitter = require("rss-feed-emitter");
-// const feeder = new RssFeedEmitter({ skipFirstLoad: true });
-const feeder = new RssFeedEmitter({ skipFirstLoad: false });
-// const testFeeder = new RssFeedEmitter({ skipFirstLoad: false });
+const feeder = new RssFeedEmitter({ skipFirstLoad: true });
 
 const { OpenAI } = require("openai");
 const openaiKey = process.env.OPENAI_TOKEN;
