@@ -240,10 +240,10 @@ feeder.on("new-item", async function (item) {
     englishStreamerIsFree = true;
   }
 
-  // if (item?.meta?.link === process.env.RSS_URL_GERMAN && germanStreamerIsFree) {
-  //   await processMessage({ msg: item, group: "GERMAN" });
-  //   germanStreamerIsFree = true;
-  // }
+  if (item?.meta?.link === process.env.RSS_URL_GERMAN && germanStreamerIsFree) {
+    await processMessage({ msg: item, group: "GERMAN" });
+    germanStreamerIsFree = true;
+  }
 });
 
 module.exports = feeder;
