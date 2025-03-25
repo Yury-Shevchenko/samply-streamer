@@ -15,6 +15,7 @@ const messageSchema = new mongoose.Schema({
   textOriginal: String,
   textModifiedTrue: String,
   textModifiedFake: String,
+  imagePrompt: String,
   openAIPostResult: JSON,
   samplyPostResult: JSON,
   group: String,

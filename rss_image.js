@@ -5,7 +5,9 @@ const fetch = (...args) =>
 const moment = require("moment");
 const Bot = mongoose.model("Bot");
 const Message = mongoose.model("Message");
+const sharp = require("sharp");
 const TextCleaner = require("text-cleaner");
+const { parse } = require("node-html-parser");
 const { customAlphabet } = require("nanoid");
 const nanoid = customAlphabet(
   "346789ABCDEFGHJKLMNPQRTUVWXYabcdefghijkmnpqrtwxyz",
@@ -60,6 +62,21 @@ async function downloadImage(url, filepath) {
   fs.writeFileSync(filepath, buffer);
 }
 
+function parseHTML({ html }) {
+  const root = parse(html);
+  // Extract the image link using querySelector
+  const imageElement = root.querySelector("img");
+  const imageSrc = imageElement ? imageElement.getAttribute("src") : null;
+  return imageSrc;
+}
+
+// Function to resize the image to a square format (1024x1024)
+async function resizeImage(inputPath, outputPath) {
+  await sharp(inputPath)
+    .resize(1792, 1024, { fit: "cover" })
+    .toFile(outputPath);
+}
+
 async function processMessage({ msg, group }) {
   if (group === "ENGLISH") {
     englishStreamerIsFree = false;
@@ -105,6 +122,13 @@ async function processMessage({ msg, group }) {
 
   const textOriginal = TextCleaner(rawText).stripHtml().condense().valueOf();
 
+  let imageURL;
+  if (group === "ENGLISH") {
+    imageURL = msg?.image?.url;
+  } else {
+    imageURL = parseHTML({ html: msg?.description });
+  }
+
   const messages = await Message.find(
     { $or: [{ messageId: msg.message_id }, { textOriginal: textOriginal }] },
     { _id: 1 }
@@ -144,7 +168,7 @@ async function processMessage({ msg, group }) {
 
       // prompt for ChatGPT
       const prompt = process.env.OPENAI_PROMPT;
-      let chatCompletion, textModifiedTrue, textModifiedFake;
+      let chatCompletion, textModifiedTrue, textModifiedFake, imagePrompt;
       try {
         chatCompletion = await openai.chat.completions.create({
           messages: [{ role: "user", content: `${prompt}: ${textOriginal}` }],
@@ -152,34 +176,40 @@ async function processMessage({ msg, group }) {
         });
         const content = chatCompletion.choices[0].message.content;
         const breakpoint = /\n+/;
-        [textModifiedTrue, textModifiedFake] = content.split(breakpoint);
+        [textModifiedTrue, textModifiedFake, imagePrompt] =
+          content.split(breakpoint);
       } catch (error) {
         console.log("Error with ChatGPT on ", new Date());
         console.log({ error });
       }
 
-      // save existing image
-      const imageURL = msg?.image?.url;
+      // define paths for images
+      const downloadedImagePath = `images/raw/${messageId}.png`;
+      const resizedImagePath = `images/original/${messageId}.png`;
+      const modifiedImagePath = `images/modified/${messageId}.png`;
 
       if (imageURL) {
-        await downloadImage(imageURL, `images/original/${messageId}.png`);
+        // save existing image
+        await downloadImage(imageURL, downloadedImagePath);
+        // resize the image
+        await resizeImage(downloadedImagePath, resizedImagePath);
       }
 
       // generate an image
-      const imagePrompt = process.env.OPENAI_IMAGE_PROMPT;
+      // const imagePrompt = process.env.OPENAI_IMAGE_PROMPT;
       let b64_json;
       try {
         const response = await openai.images.generate({
           model: "dall-e-3",
-          prompt: `${imagePrompt}: ${textModifiedFake}`,
+          prompt: `${imagePrompt}`,
           n: 1,
-          size: "1024x1024",
+          size: "1792x1024", // 1024x1024 or 1024x1792
           response_format: "b64_json",
         });
         b64_json = response.data[0].b64_json;
         // Decode and save the image as a PNG file
         const imageBuffer = Buffer.from(b64_json, "base64");
-        const imagePath = `images/modified/${messageId}.png`;
+        const imagePath = modifiedImagePath;
         await fs.writeFile(imagePath, imageBuffer, function (err) {
           if (err) {
             return console.log(err);
@@ -205,6 +235,7 @@ async function processMessage({ msg, group }) {
         textOriginal: textOriginal,
         textModifiedTrue: textModifiedTrue,
         textModifiedFake: textModifiedFake,
+        imagePrompt: imagePrompt,
         openAIPostResult: chatCompletion,
         samplyPostResult: {
           status: samplyResult?.status,
